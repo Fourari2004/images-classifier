@@ -227,32 +227,74 @@ def get_person_detail(person_id: int):
 
 # --- FACES SPECIFIC ROUTES (Data Faces Management) ---
 @app.get("/api/faces")
-def get_all_faces(page: int = 1, limit: int = 100, search: str = ""):
-    """Returns individual detected face crops across all photos and persons."""
+def get_all_faces(page: int = 1, limit: int = 100, search: str = "", unique_per_person: bool = True):
+    """
+    Returns detected face crops.
+    If unique_per_person=True, returns exactly one representative face per person (no duplicates).
+    """
     conn = db._get_connection()
     try:
         cur = conn.cursor()
-        query = """
-            SELECT ip.image_id, ip.person_id, ip.face_box, ip.confidence,
-                   p.display_name, p.folder_name,
-                   img.path, img.sha256, img.date
-            FROM ImagePersons ip
-            JOIN Persons p ON ip.person_id = p.id
-            JOIN Images img ON ip.image_id = img.id
-        """
-        params = []
-        if search.strip():
-            query += " WHERE p.display_name LIKE ? OR p.folder_name LIKE ? "
-            like_s = f"%{search.strip()}%"
-            params = [like_s, like_s]
-        
-        query += " ORDER BY ip.image_id DESC LIMIT ? OFFSET ?"
-        offset = (page - 1) * limit
-        params.extend([limit, offset])
-        
-        cur.execute(query, tuple(params))
-        rows = [dict(r) for r in cur.fetchall()]
-        
+        if unique_per_person:
+            query = """
+                SELECT ip.image_id, ip.person_id, ip.face_box, ip.confidence,
+                       p.display_name, p.folder_name,
+                       img.path, img.sha256, img.date
+                FROM ImagePersons ip
+                JOIN Persons p ON ip.person_id = p.id
+                JOIN Images img ON ip.image_id = img.id
+            """
+            params = []
+            if search.strip():
+                query += " WHERE p.display_name LIKE ? OR p.folder_name LIKE ? "
+                like_s = f"%{search.strip()}%"
+                params = [like_s, like_s]
+
+            query += " GROUP BY ip.person_id ORDER BY ip.confidence DESC, ip.person_id ASC LIMIT ? OFFSET ?"
+            offset = (page - 1) * limit
+            params.extend([limit, offset])
+
+            cur.execute(query, tuple(params))
+            rows = [dict(r) for r in cur.fetchall()]
+
+            count_query = "SELECT COUNT(DISTINCT person_id) FROM ImagePersons"
+            if search.strip():
+                count_query = """
+                    SELECT COUNT(DISTINCT ip.person_id) 
+                    FROM ImagePersons ip 
+                    JOIN Persons p ON ip.person_id = p.id 
+                    WHERE p.display_name LIKE ? OR p.folder_name LIKE ?
+                """
+                cur.execute(count_query, (like_s, like_s))
+            else:
+                cur.execute(count_query)
+            total_count = cur.fetchone()[0]
+
+        else:
+            query = """
+                SELECT ip.image_id, ip.person_id, ip.face_box, ip.confidence,
+                       p.display_name, p.folder_name,
+                       img.path, img.sha256, img.date
+                FROM ImagePersons ip
+                JOIN Persons p ON ip.person_id = p.id
+                JOIN Images img ON ip.image_id = img.id
+            """
+            params = []
+            if search.strip():
+                query += " WHERE p.display_name LIKE ? OR p.folder_name LIKE ? "
+                like_s = f"%{search.strip()}%"
+                params = [like_s, like_s]
+            
+            query += " ORDER BY ip.image_id DESC LIMIT ? OFFSET ?"
+            offset = (page - 1) * limit
+            params.extend([limit, offset])
+            
+            cur.execute(query, tuple(params))
+            rows = [dict(r) for r in cur.fetchall()]
+
+            cur.execute("SELECT COUNT(*) FROM ImagePersons")
+            total_count = cur.fetchone()[0]
+
         faces = []
         for r in rows:
             sha256 = r.get('sha256', '')
@@ -277,10 +319,7 @@ def get_all_faces(page: int = 1, limit: int = 100, search: str = ""):
                 "thumbnail_url": f"/api/thumbnail/{thumb_name}" if thumb_name else "",
                 "date": r.get('date', '')
             })
-            
-        cur.execute("SELECT COUNT(*) FROM ImagePersons")
-        total_count = cur.fetchone()[0]
-        
+
         return {
             "total": total_count,
             "page": page,

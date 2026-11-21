@@ -16,6 +16,24 @@ if PROJECT_ROOT not in sys.path:
 os.environ.setdefault("ORT_LOGGING_LEVEL", "3")
 os.environ.setdefault("OMP_NUM_THREADS", "4")
 
+# Silence benign Windows Proactor socket shutdown reset errors (WinError 10054)
+if sys.platform == "win32":
+    import asyncio
+    # Suppress WinError 10054 ConnectionReset noise on Windows asyncio loop
+    try:
+        from asyncio.proactor_events import _ProactorBasePipeTransport
+        _original_call_connection_lost = _ProactorBasePipeTransport._call_connection_lost
+
+        def _silent_call_connection_lost(self, exc=None):
+            try:
+                _original_call_connection_lost(self, exc)
+            except (ConnectionResetError, OSError):
+                pass
+
+        _ProactorBasePipeTransport._call_connection_lost = _silent_call_connection_lost
+    except Exception:
+        pass
+
 import uvicorn
 from src.server import app
 

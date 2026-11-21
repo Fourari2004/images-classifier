@@ -87,7 +87,7 @@ export default function FacesView({
             Visages extraits & Données isolées (data_faces)
           </h2>
           <p className="text-xs text-slate-400 font-medium">
-            {totalFaces} visages indexés. Cochez 2 visages ou plus pour les fusionner sous une même personne.
+            {totalFaces} personnes distinctes indexées (un visage représentatif par personne). Cochez 2 visages ou plus pour les fusionner sous une même personne.
           </p>
         </div>
 
