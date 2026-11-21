@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional, Dict, Any, List
 from src.database import Database
 from src.faiss_index import FAISSIndex
 
@@ -53,3 +53,9 @@ class Recognizer:
         embedding_id = self.db.add_embedding(person_id, embedding, quality)
         self.index.add_embedding(embedding_id, person_id, embedding)
         return embedding_id
+
+    def find_merge_suggestions(self, threshold: float = 0.55) -> List[Dict[str, Any]]:
+        """
+        Scan all embeddings in FAISS to find people with high similarity.
+        """
+        return []

@@ -48,6 +48,26 @@ class Config:
         
         self._resolve_paths()
         
+    def get(self, key_path: str, default=None):
+        parts = key_path.split(".")
+        curr = self.data
+        for p in parts:
+            if isinstance(curr, dict) and p in curr:
+                curr = curr[p]
+            else:
+                return default
+        return curr
+
+    def set(self, key_path: str, value):
+        parts = key_path.split(".")
+        curr = self.data
+        for p in parts[:-1]:
+            if p not in curr or not isinstance(curr[p], dict):
+                curr[p] = {}
+            curr = curr[p]
+        curr[parts[-1]] = value
+        self._resolve_paths()
+
     def _resolve_paths(self):
         # Resolve paths to absolute paths relative to BASE_DIR if they are relative
         paths_section = self.data.get("paths", {})

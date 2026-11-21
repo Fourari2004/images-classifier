@@ -7,9 +7,8 @@ from typing import List, Dict, Tuple, Any
 
 class FaceDetector:
     """
-    Wraps InsightFace FaceAnalysis for CPU-only face detection and recognition.
-    On first run, InsightFace will automatically download the buffalo_l model
-    (~200 MB) to the models directory if it is not already present.
+    Wraps InsightFace FaceAnalysis with DirectML GPU acceleration and CPU fallback.
+    Maintains exact original models and behavior for maximum compatibility.
     """
 
     def __init__(self, models_dir: str, mode: str = "balanced", cpu_threads: int = 4):
@@ -17,26 +16,40 @@ class FaceDetector:
         self.mode = mode
         self.cpu_threads = cpu_threads
         self.app = None
+        self.active_provider = "CPU"
 
     def initialize(self):
         """
         Initialize InsightFace FaceAnalysis.
-        If the buffalo_l model files are not present, InsightFace will download
-        them automatically from its model server on first launch.
+        Automatically uses DirectML (GPU) if available, with CPU fallback.
         """
         try:
             from insightface.app import FaceAnalysis
+            import onnxruntime as ort
         except ImportError as e:
             raise ImportError(
-                "insightface non installé. Exécutez : pip install insightface onnxruntime"
+                "insightface non installé. Exécutez : pip install insightface onnxruntime-directml"
             ) from e
 
-        # InsightFace looks for models at:  root / models / <name> /
-        # We set root = project root so models land in  project/models/buffalo_l/
         root_dir = str(self.models_dir.parent)
         self.models_dir.mkdir(parents=True, exist_ok=True)
 
-        providers = ['CPUExecutionProvider']
+        available_providers = ort.get_available_providers()
+        providers = []
+        ctx_id = -1
+
+        if 'DmlExecutionProvider' in available_providers:
+            providers.append('DmlExecutionProvider')
+            ctx_id = 0
+            self.active_provider = "DirectML (GPU)"
+        elif 'CUDAExecutionProvider' in available_providers:
+            providers.append('CUDAExecutionProvider')
+            ctx_id = 0
+            self.active_provider = "CUDA (GPU)"
+
+        providers.append('CPUExecutionProvider')
+        if ctx_id == -1:
+            self.active_provider = "CPU"
 
         # Allowed modules: only detection + recognition (skip landmarks/age/gender → faster)
         self.app = FaceAnalysis(
@@ -52,8 +65,12 @@ class FaceDetector:
             "accurate": (960, 960),
         }.get(self.mode, (640, 640))
 
-        # ctx_id = -1  → CPU
-        self.app.prepare(ctx_id=-1, det_size=det_size)
+        try:
+            self.app.prepare(ctx_id=ctx_id, det_size=det_size)
+        except Exception:
+            # Fallback CPU if driver or memory issue
+            self.active_provider = "CPU (Fallback)"
+            self.app.prepare(ctx_id=-1, det_size=det_size)
 
     def detect_faces(self, image_path: str) -> List[Dict[str, Any]]:
         """

@@ -1,0 +1,6 @@
+{
+  "name": "FaceSorter AI",
+  "description": "An elegant, minimalist, and responsive face recognition sorting application that scans images, detects faces, groups people, and organizes folders automatically.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

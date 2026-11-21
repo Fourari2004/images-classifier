@@ -12,6 +12,10 @@ class FAISSIndex:
         self.offset_map: List[Tuple[int, int]] = []
         self._lock = threading.Lock()
 
+    def build(self, db_embeddings: List[Tuple[int, int, np.ndarray]]):
+        """Alias for rebuild to ensure compatibility."""
+        return self.rebuild(db_embeddings)
+
     def rebuild(self, db_embeddings: List[Tuple[int, int, np.ndarray]]):
         """
         Rebuilds the FAISS index from a list of (embedding_id, person_id, embedding_vector).
