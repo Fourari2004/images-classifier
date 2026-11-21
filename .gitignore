@@ -1,0 +1,42 @@
+# Modèles et poids IA
+/models/*
+!/models/.gitkeep
+*.onnx
+*.bin
+*.pth
+*.pt
+*.pkl
+
+# Dossier classified (images classées/sorties)
+/classified/*
+!/classified/.gitkeep
+
+# Entrées, sorties, base de données locale et logs
+/input/*
+!/input/.gitkeep
+/output/*
+!/output/.gitkeep
+/database/*.db
+/database/*.bin
+/logs/*.log
+*.log
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+ENV/
+
+# Cache Python et compilation
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# IDE et OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

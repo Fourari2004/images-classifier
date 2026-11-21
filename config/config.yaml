@@ -1,0 +1,45 @@
+# Face Organizer AI Configuration File
+
+paths:
+  database_dir: "database"
+  database_file: "database/face_organizer.db"
+  faiss_index_file: "database/faiss_index.bin"
+  models_dir: "models"
+  logs_dir: "logs"
+  log_file: "logs/app.log"
+  output_dir: "c:\\Users\\foura\\Desktop\\cv.photographer\\classified"
+  default_input_dir: "c:\\Users\\foura\\Desktop\\cv.photographer\\input"
+
+processing:
+  recognition_threshold: 0.45        # ArcFace Cosine Similarity Threshold (0.0 to 1.0)
+  min_face_confidence: 0.6          # Minimum confidence for face detection
+  cpu_threads: 4                    # Number of threads to use (multithreading)
+  mode: "balanced"                  # "fast" (smaller model), "balanced" (medium), "accurate" (buffalo_l)
+  allowed_extensions:
+    - ".jpg"
+    - ".jpeg"
+    - ".png"
+    - ".bmp"
+    - ".webp"
+    - ".tif"
+    - ".tiff"
+    - ".arw"
+    - ".ARW"
+    - ".cr2"
+    - ".CR2"
+    - ".cr3"
+    - ".CR3"
+    - ".nef"
+    - ".NEF"
+    - ".dng"
+    - ".DNG"
+    - ".orf"
+    - ".ORF"
+    - ".rw2"
+    - ".RW2"
+
+gui:
+  theme: "dark"                     # "dark" or "light"
+  color_theme: "blue"               # "blue", "green", "dark-blue"
+  window_width: 1100
+  window_height: 750

@@ -1,0 +1,11 @@
+customtkinter
+pyyaml
+opencv-python
+numpy
+scikit-learn
+tqdm
+pillow
+onnxruntime
+faiss-cpu
+insightface
+rawpy
